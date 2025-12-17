@@ -343,12 +343,31 @@ async function loadMyMatches() {
     return;
   }
 
+  // Récupérer tous les ids d'équipes (A et B) présents dans ces scrims
+  const teamIds = [
+    ...new Set(data.flatMap((s) => [s.team_a_id, s.team_b_id]).filter(Boolean)),
+  ];
+
+  let teamsById = {};
+  if (teamIds.length) {
+    const { data: teams } = await client
+      .from("teams")
+      .select("id, name")
+      .in("id", teamIds);
+
+    if (teams) {
+      teamsById = Object.fromEntries(teams.map((t) => [t.id, t.name]));
+    }
+  }
+
   data.forEach((scrim) => {
     const li = document.createElement("li");
-    const isTeamA = scrim.team_a_id === currentTeam.id;
-    const vs = isTeamA ? "Adversaire (team B)" : "Adversaire (team A)";
 
-    let text = `${scrim.mode} - ${scrim.scheduled_at} - statut: ${scrim.status} - ${vs}`;
+    const isTeamA = scrim.team_a_id === currentTeam.id;
+    const opponentId = isTeamA ? scrim.team_b_id : scrim.team_a_id;
+    const opponentName = teamsById[opponentId] || "Adversaire inconnu";
+
+    let text = `${scrim.mode} - ${scrim.scheduled_at} - statut: ${scrim.status} - Adversaire : ${opponentName}`;
 
     if (scrim.status === "finished") {
       text += ` | Score: ${scrim.score_team_a} - ${scrim.score_team_b}`;
