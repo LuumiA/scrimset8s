@@ -24,13 +24,11 @@ function updateUserEmail() {
 function openAuth() {
   const overlay = document.getElementById("auth-overlay");
   if (overlay) overlay.classList.add("visible");
-  document.body.classList.add("auth-open");
 }
 
 function closeAuth() {
   const overlay = document.getElementById("auth-overlay");
   if (overlay) overlay.classList.remove("visible");
-  document.body.classList.remove("auth-open");
 }
 
 // ---------- AUTH (signup / login) ----------
@@ -77,6 +75,12 @@ async function handleSignIn(e) {
 async function loadCurrentTeam() {
   if (!currentUser) {
     currentTeam = null;
+    const createSection = document.getElementById("team-create-section");
+    const infoSection = document.getElementById("team-info-section");
+    if (createSection && infoSection) {
+      createSection.style.display = "block";
+      infoSection.style.display = "none";
+    }
     return;
   }
 
@@ -98,7 +102,6 @@ async function loadCurrentTeam() {
     const nameDisplay = document.getElementById("team-name-display");
 
     if (currentTeam && infoSection && createSection) {
-      // on a une équipe → on affiche "Mon équipe"
       createSection.style.display = "none";
       infoSection.style.display = "block";
       if (nameDisplay) {
@@ -106,7 +109,6 @@ async function loadCurrentTeam() {
       }
       loadTeamMembers();
     } else if (createSection && infoSection) {
-      // pas d'équipe → on affiche le formulaire de création
       createSection.style.display = "block";
       infoSection.style.display = "none";
     }
@@ -404,23 +406,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   const renameBtn = document.getElementById("rename-team-btn");
   const deleteBtn = document.getElementById("delete-team-btn");
 
-  // 1) Gestion du flag local pour savoir si on considère l'utilisateur connecté
   const hadLocalSession = localStorage.getItem(LOCAL_AUTH_KEY) === "1";
   if (!hadLocalSession) {
-    // pas de session front → UI en mode déconnecté
     currentUser = null;
     currentTeam = null;
     updateUserEmail();
   }
 
-  // 2) Bouton Login / Déconnexion
   if (openAuthBtn) {
     openAuthBtn.addEventListener("click", async () => {
       if (!currentUser) {
-        // pas connecté côté front → ouvrir la popup
         openAuth();
       } else {
-        // Déconnexion "front-only"
         currentUser = null;
         currentTeam = null;
         localStorage.removeItem(LOCAL_AUTH_KEY);
@@ -434,18 +431,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // 3) Croix de la popup
   if (closeAuthBtn) {
     closeAuthBtn.addEventListener("click", () => {
       closeAuth();
     });
   }
 
-  // 4) Formulaires signup / login
   if (signupForm) signupForm.addEventListener("submit", handleSignUp);
   if (loginForm) loginForm.addEventListener("submit", handleSignIn);
 
-  // 5) Boutons équipe (renommer / supprimer)
   if (renameBtn) {
     renameBtn.addEventListener("click", async () => {
       if (!currentTeam) return;
@@ -489,6 +483,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 client.auth.onAuthStateChange((event, session) => {
   console.log("AUTH EVENT =", event, "SESSION =", session);
 
+  const hadLocalSession = localStorage.getItem(LOCAL_AUTH_KEY) === "1";
+
+  if (!hadLocalSession && event === "INITIAL_SESSION") {
+    currentUser = null;
+    updateUserEmail();
+    return;
+  }
+
   currentUser = session?.user || null;
 
   if (currentUser) {
@@ -506,6 +508,8 @@ client.auth.onAuthStateChange((event, session) => {
   });
 });
 
+// ---------- MEMBRES D'ÉQUIPE ----------
+
 async function loadTeamMembers() {
   const list = document.getElementById("team-members");
   if (!list) return;
@@ -516,7 +520,6 @@ async function loadTeamMembers() {
     return;
   }
 
-  // à adapter au nom de ta table de membres
   const { data, error } = await client
     .from("team_members")
     .select("user_email")
