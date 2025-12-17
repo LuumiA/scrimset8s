@@ -406,7 +406,13 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!currentUser) {
         openAuth();
       } else {
-        await client.auth.signOut();
+        const { error } = await client.auth.signOut();
+        if (error) {
+          alert("Erreur déconnexion : " + error.message);
+        } else {
+          // on force un reload pour être sûr sur GitHub Pages
+          window.location.reload();
+        }
       }
     });
   }
