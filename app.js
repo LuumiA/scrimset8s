@@ -7,26 +7,51 @@ const supabaseKey =
 
 const client = createClient(supabaseUrl, supabaseKey);
 
-// Inscription
-document.getElementById("signup-form").addEventListener("submit", async (e) => {
+let currentUser = null;
+let currentTeam = null;
+
+// ---------- UI AUTH (email topbar + popup) ----------
+
+function updateUserEmail() {
+  const span = document.getElementById("user-email");
+  const btn = document.getElementById("open-auth");
+  if (span) span.textContent = currentUser ? currentUser.email : "";
+  if (btn)
+    btn.textContent = currentUser ? "Déconnexion" : "Login / Inscription";
+}
+
+function openAuth() {
+  const overlay = document.getElementById("auth-overlay");
+  if (overlay) overlay.classList.add("visible");
+  document.body.classList.add("auth-open");
+}
+
+function closeAuth() {
+  const overlay = document.getElementById("auth-overlay");
+  if (overlay) overlay.classList.remove("visible");
+  document.body.classList.remove("auth-open");
+}
+
+// ---------- AUTH (signup / login) ----------
+
+async function handleSignUp(e) {
   e.preventDefault();
   const email = document.getElementById("signup-email").value;
   const password = document.getElementById("signup-password").value;
 
   const { data, error } = await client.auth.signUp({ email, password });
 
+  const status = document.getElementById("status");
   if (error) {
-    document.getElementById("status").innerText =
-      "Erreur inscription: " + error.message;
+    status.innerText = "Erreur inscription: " + error.message;
   } else {
-    document.getElementById("status").innerText =
-      "Compte créé, regarde dans Supabase → Users.";
+    status.innerText = "Compte créé, vérifie tes mails.";
+    closeAuth();
     console.log(data);
   }
-});
+}
 
-// Connexion
-document.getElementById("login-form").addEventListener("submit", async (e) => {
+async function handleSignIn(e) {
   e.preventDefault();
   const email = document.getElementById("login-email").value;
   const password = document.getElementById("login-password").value;
@@ -36,23 +61,24 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
     password,
   });
 
+  const status = document.getElementById("status");
   if (error) {
-    document.getElementById("status").innerText =
-      "Erreur connexion: " + error.message;
+    status.innerText = "Erreur connexion: " + error.message;
   } else {
-    document.getElementById("status").innerText =
-      "Connecté en tant que " + email;
+    status.innerText = "Connecté en tant que " + email;
+    closeAuth();
     console.log(data);
   }
-});
+}
 
-let currentUser = null;
+// ---------- DONNÉES : team / scrims / matchs / classement ----------
 
 async function loadCurrentTeam() {
   if (!currentUser) {
     currentTeam = null;
     return;
   }
+
   const { data, error } = await client
     .from("teams")
     .select("*")
@@ -65,22 +91,29 @@ async function loadCurrentTeam() {
     currentTeam = null;
   } else {
     currentTeam = data;
+
+    const createSection = document.getElementById("team-create-section");
+    const infoSection = document.getElementById("team-info-section");
+    const nameDisplay = document.getElementById("team-name-display");
+
+    if (currentTeam && infoSection && createSection) {
+      // on a une équipe → on affiche "Mon équipe"
+      createSection.style.display = "none";
+      infoSection.style.display = "block";
+      if (nameDisplay) {
+        nameDisplay.textContent = `Nom : ${currentTeam.name}`;
+      }
+      loadTeamMembers();
+    } else if (createSection && infoSection) {
+      // pas d'équipe → on affiche le formulaire de création
+      createSection.style.display = "block";
+      infoSection.style.display = "none";
+    }
+
     console.log("Current team:", currentTeam);
   }
 }
 
-client.auth.onAuthStateChange((event, session) => {
-  currentUser = session?.user || null;
-  updateUserEmail();
-
-  loadCurrentTeam().then(() => {
-    loadMyMatches();
-    loadOpenScrims();
-    loadLeaderboard();
-  });
-});
-
-// Création d'équipe
 document.getElementById("team-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!currentUser) {
@@ -103,6 +136,8 @@ document.getElementById("team-form").addEventListener("submit", async (e) => {
     document.getElementById("team-status").innerText =
       "Équipe créée: " + data[0].name;
     console.log("Team:", data[0]);
+    loadCurrentTeam();
+    loadLeaderboard();
   }
 });
 
@@ -186,12 +221,13 @@ async function acceptScrim(id) {
       status: "accepted",
     })
     .eq("id", id)
-    .eq("status", "open"); // évite d’accepter un scrim déjà pris
+    .eq("status", "open");
 
   if (error) {
     alert("Erreur acceptation scrim: " + error.message);
   } else {
     loadOpenScrims();
+    loadMyMatches();
   }
 }
 
@@ -257,7 +293,6 @@ async function loadMyMatches() {
           return;
         }
 
-        // 1. Mettre le scrim en finished avec les scores
         const { error: scrimError } = await client
           .from("scrims")
           .update({
@@ -272,7 +307,6 @@ async function loadMyMatches() {
           return;
         }
 
-        // 2. Calculer les points (V1 simple : 3 pts win, 1 nul, 0 défaite)
         let pointsA = 0;
         let pointsB = 0;
         if (sA > sB) {
@@ -284,9 +318,7 @@ async function loadMyMatches() {
           pointsB = 1;
         }
 
-        // 3. Appliquer les points aux deux teams
         const updates = [];
-
         if (pointsA > 0) {
           updates.push(
             client.rpc("increment_team_points", {
@@ -295,7 +327,6 @@ async function loadMyMatches() {
             })
           );
         }
-
         if (pointsB > 0) {
           updates.push(
             client.rpc("increment_team_points", {
@@ -344,7 +375,8 @@ async function loadLeaderboard() {
   });
 }
 
-// Navigation entre sections
+// ---------- NAVIGATION ENTRE SECTIONS ----------
+
 document.querySelectorAll(".nav-link[data-section]").forEach((btn) => {
   btn.addEventListener("click", () => {
     const target = btn.getAttribute("data-section");
@@ -361,19 +393,116 @@ document.querySelectorAll(".nav-link[data-section]").forEach((btn) => {
   });
 });
 
-// Toggle affichage panneau auth
-const authPanel = document.getElementById("auth-panel");
-const openAuthBtn = document.getElementById("open-auth");
+// ---------- BOUTON LOGIN / DÉCONNEXION + CROIX + FORM ----------
 
-if (openAuthBtn && authPanel) {
-  openAuthBtn.addEventListener("click", () => {
-    authPanel.classList.toggle("visible");
+document.addEventListener("DOMContentLoaded", () => {
+  const openAuthBtn = document.getElementById("open-auth");
+  const closeAuthBtn = document.getElementById("close-auth");
+  const signupForm = document.getElementById("signup-form");
+  const loginForm = document.getElementById("login-form");
+
+  if (openAuthBtn) {
+    openAuthBtn.addEventListener("click", async () => {
+      if (!currentUser) {
+        openAuth();
+      } else {
+        await client.auth.signOut();
+      }
+    });
+  }
+
+  if (closeAuthBtn) {
+    closeAuthBtn.addEventListener("click", () => {
+      closeAuth();
+    });
+  }
+
+  if (signupForm) signupForm.addEventListener("submit", handleSignUp);
+  if (loginForm) loginForm.addEventListener("submit", handleSignIn);
+
+  const renameBtn = document.getElementById("rename-team-btn");
+  const deleteBtn = document.getElementById("delete-team-btn");
+
+  if (renameBtn) {
+    renameBtn.addEventListener("click", async () => {
+      if (!currentTeam) return;
+      const newName = prompt("Nouveau nom de l'équipe :", currentTeam.name);
+      if (!newName) return;
+      const { data, error } = await client
+        .from("teams")
+        .update({ name: newName })
+        .eq("id", currentTeam.id)
+        .select();
+      if (error) {
+        alert("Erreur renommage: " + error.message);
+      } else {
+        currentTeam = data[0];
+        loadCurrentTeam();
+      }
+    });
+  }
+
+  if (deleteBtn) {
+    deleteBtn.addEventListener("click", async () => {
+      if (!currentTeam) return;
+      if (!confirm("Supprimer définitivement l'équipe ?")) return;
+      const { error } = await client
+        .from("teams")
+        .delete()
+        .eq("id", currentTeam.id);
+      if (error) {
+        alert("Erreur suppression: " + error.message);
+      } else {
+        currentTeam = null;
+        loadCurrentTeam();
+        loadLeaderboard();
+      }
+    });
+  }
+});
+
+// ---------- SUPABASE: LISTEN AUTH STATE ----------
+
+client.auth.onAuthStateChange((event, session) => {
+  currentUser = session?.user || null;
+  updateUserEmail();
+
+  loadCurrentTeam().then(() => {
+    loadMyMatches();
+    loadOpenScrims();
+    loadLeaderboard();
   });
-}
+});
 
-// Afficher email joueur connecté dans la topbar
-function updateUserEmail() {
-  const span = document.getElementById("user-email");
-  if (!span) return;
-  span.textContent = currentUser ? currentUser.email : "";
+async function loadTeamMembers() {
+  const list = document.getElementById("team-members");
+  if (!list) return;
+  list.innerHTML = "";
+
+  if (!currentTeam) {
+    list.innerHTML = "<li>Aucune équipe.</li>";
+    return;
+  }
+
+  // à adapter au nom de ta table de membres
+  const { data, error } = await client
+    .from("team_members")
+    .select("user_email")
+    .eq("team_id", currentTeam.id);
+
+  if (error) {
+    list.innerHTML = "<li>Erreur chargement membres.</li>";
+    return;
+  }
+
+  if (!data || !data.length) {
+    list.innerHTML = "<li>Pas encore de joueurs dans l'équipe.</li>";
+    return;
+  }
+
+  data.forEach((m) => {
+    const li = document.createElement("li");
+    li.textContent = m.user_email;
+    list.appendChild(li);
+  });
 }
