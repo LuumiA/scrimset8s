@@ -16,9 +16,15 @@ const LOCAL_AUTH_KEY = "bo7_is_logged_in";
 function updateUserEmail() {
   const span = document.getElementById("user-email");
   const btn = document.getElementById("open-auth");
-  if (span) span.textContent = currentUser ? currentUser.email : "";
-  if (btn)
-    btn.textContent = currentUser ? "Déconnexion" : "Login / Inscription";
+
+  if (currentUser) {
+    const label = currentUser.username || currentUser.email;
+    if (span) span.textContent = label;
+    if (btn) btn.textContent = "Déconnexion";
+  } else {
+    if (span) span.textContent = "";
+    if (btn) btn.textContent = "Login / Inscription";
+  }
 }
 
 function openAuth() {
@@ -70,6 +76,7 @@ async function handleSignIn(e) {
     currentUser = data.user;
     localStorage.setItem(LOCAL_AUTH_KEY, "1");
 
+    await loadMyProfile();
     updateUserEmail();
     closeAuth();
 
@@ -77,7 +84,6 @@ async function handleSignIn(e) {
     await loadMyMatches();
     await loadOpenScrims();
     await loadLeaderboard();
-    await loadMyProfile();
   }
 }
 
@@ -611,14 +617,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!currentUser) {
       // Plus de session Supabase → on nettoie le flag local
       localStorage.removeItem(LOCAL_AUTH_KEY);
-    }
+      updateUserEmail(); // remet "Login / Inscription"
+    } else {
+      // 1) on charge le profil pour récupérer username
+      await loadMyProfile(); // ça fait currentUser.username = ...
 
-    updateUserEmail();
-    await loadCurrentTeam();
-    await loadMyMatches();
-    await loadOpenScrims();
-    await loadLeaderboard();
-    await loadMyProfile();
+      // 2) ensuite on met à jour le texte en haut à droite
+      updateUserEmail();
+
+      // 3) puis le reste
+      await loadCurrentTeam();
+      await loadMyMatches();
+      await loadOpenScrims();
+      await loadLeaderboard();
+    }
   }
 
   if (openAuthBtn) {
@@ -631,12 +643,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         currentTeam = null;
         localStorage.removeItem(LOCAL_AUTH_KEY);
 
+        await loadMyProfile();
+
         updateUserEmail();
+
         await loadCurrentTeam();
         await loadMyMatches();
         await loadOpenScrims();
         await loadLeaderboard();
-        await loadMyProfile();
       }
     });
   }
@@ -704,7 +718,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   if (inviteBtn) {
-    inviteBtn.addEventListener("click", inviteMemberByEmail);
+    inviteBtn.addEventListener("click", inviteMemberByUsername);
   }
 
   if (profileForm) {
@@ -743,11 +757,11 @@ async function loadTeamMembers() {
     .from("team_members")
     .select(
       `
-      id,
-      role,
-      user_id,
-      profiles:user_id ( email )
-    `
+    id,
+    role,
+    user_id,
+    profiles:user_id ( email, username )
+  `
     )
     .eq("team_id", currentTeam.id);
 
@@ -764,9 +778,9 @@ async function loadTeamMembers() {
 
   data.forEach((m) => {
     const li = document.createElement("li");
-    const email = m.profiles?.email || "(email inconnu)";
+    const label = m.profiles?.username || m.profiles?.email || "(inconnu)";
     const roleLabel = m.role === "owner" ? " (owner)" : "";
-    li.textContent = `${email}${roleLabel}`;
+    li.textContent = `${label}${roleLabel}`;
 
     // 3) Bouton "Retirer" uniquement si :
     //    - le joueur connecté est owner
@@ -775,8 +789,7 @@ async function loadTeamMembers() {
     if (
       isCurrentUserOwner &&
       currentUser &&
-      m.profiles?.email &&
-      m.profiles.email !== currentUser.email &&
+      m.user_id !== currentUser.id &&
       m.role !== "owner"
     ) {
       const removeBtn = document.createElement("button");
@@ -802,7 +815,7 @@ async function loadTeamMembers() {
   });
 }
 
-async function inviteMemberByEmail() {
+async function inviteMemberByUsername() {
   const emailInput = document.getElementById("invite-email");
   const status = document.getElementById("invite-status");
   if (!emailInput || !status) return;
@@ -904,6 +917,8 @@ async function loadMyProfile() {
   if (usernameInput) usernameInput.value = data.username || "";
   if (discordInput) discordInput.value = data.discord || "";
   if (activisionInput) activisionInput.value = data.activision_id || "";
+
+  currentUser.username = data.username || null;
 }
 
 async function saveMyProfile(e) {
@@ -929,5 +944,8 @@ async function saveMyProfile(e) {
     status.textContent = "Erreur sauvegarde profil : " + error.message;
   } else {
     status.textContent = "Profil mis à jour.";
+
+    currentUser.username = username || null;
+    updateUserEmail();
   }
 }
