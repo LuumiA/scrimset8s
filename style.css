@@ -479,3 +479,10 @@ ol {
     padding: 8px 10px;
   }
 }
+
+/* Icône calendrier en blanc sur fond sombre */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
