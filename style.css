@@ -1,0 +1,187 @@
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background: radial-gradient(circle at top, #172554 0, #020617 55%);
+  color: #e5e7eb;
+  margin: 0;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 24px;
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom: 1px solid #1e293b;
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.logo {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid #38bdf8;
+  background: radial-gradient(circle at top left, #0ea5e9, #0369a1);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.nav {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-link {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #cbd5f5;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.nav-link:hover {
+  border-color: #1d4ed8;
+  background: rgba(30, 64, 175, 0.25);
+}
+
+.nav-link.active {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  color: #e5e7eb;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+#open-auth {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid #4b5563;
+  background: #111827;
+  color: #e5e7eb;
+  cursor: pointer;
+}
+
+#open-auth:hover {
+  border-color: #38bdf8;
+}
+
+/* MAIN */
+
+.main {
+  max-width: 1100px;
+  margin: 24px auto;
+  padding: 0 16px 40px;
+}
+
+.page-title {
+  font-size: 26px;
+  margin: 0 0 16px;
+}
+
+/* Panels / sections */
+
+.panel {
+  display: none;
+}
+
+.panel.visible {
+  display: block;
+}
+
+.section {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid #1f2937;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 18px;
+}
+
+.section h2 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+
+.section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.auth-panel {
+  margin-bottom: 18px;
+}
+
+.auth-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+/* Forms */
+
+form {
+  margin-bottom: 4px;
+}
+
+input,
+button {
+  padding: 6px 10px;
+  margin: 2px 0;
+  border-radius: 6px;
+  border: 1px solid #4b5563;
+  font-size: 14px;
+}
+
+input {
+  background: #020617;
+  color: #e5e7eb;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+button {
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  color: white;
+  cursor: pointer;
+  border-color: transparent;
+}
+
+button:hover {
+  background: linear-gradient(135deg, #1d4ed8, #4338ca);
+}
+
+ul,
+ol {
+  padding-left: 20px;
+}
+
+#status,
+#team-status,
+#scrim-status {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #facc15;
+}
+
+/* Scrim list style */
+
+.scrim-list li {
+  margin-bottom: 6px;
+}
