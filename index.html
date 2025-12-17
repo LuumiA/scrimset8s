@@ -10,9 +10,10 @@
       <div class="topbar-left">
         <div class="logo">BO7</div>
         <nav class="nav">
-          <button class="nav-link active" data-section="scrims-section">
-            Scrims
+          <button class="nav-link active" data-section="home-section">
+            Accueil
           </button>
+          <button class="nav-link" data-section="scrims-section">Scrims</button>
           <button class="nav-link" data-section="matches-section">
             Mes matchs
           </button>
@@ -77,8 +78,32 @@
         </div>
       </div>
 
+      <!-- SECTION ACCUEIL -->
+      <section id="home-section" class="panel visible">
+        <h1 class="page-title">BO7 • Scrims & Classement</h1>
+
+        <div class="section">
+          <h2>Le concept</h2>
+          <p>
+            BO7 te permet de trouver des scrims rapidement, organiser tes matchs
+            et suivre le classement de ta team sans prise de tête.
+          </p>
+          <button id="cta-start">Commencer maintenant</button>
+        </div>
+
+        <div class="section">
+          <h2>Classement équipes</h2>
+          <ol id="leaderboard-home"></ol>
+        </div>
+
+        <div class="section">
+          <h2>Derniers scrims</h2>
+          <ul id="recent-scrims"></ul>
+        </div>
+      </section>
+
       <!-- SECTION SCRIMS -->
-      <section id="scrims-section" class="panel visible">
+      <section id="scrims-section" class="panel">
         <h1 class="page-title">Scrims & Classement</h1>
 
         <div class="section-grid">
