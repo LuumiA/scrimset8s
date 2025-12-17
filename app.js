@@ -406,13 +406,26 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!currentUser) {
         openAuth();
       } else {
+        // 1. On reset tout côté front
+        currentUser = null;
+        updateUserEmail();
+        currentTeam = null;
+        loadCurrentTeam();
+        loadMyMatches();
+        loadOpenScrims();
+        loadLeaderboard();
+
+        // 2. On tente quand même le signOut, mais on ne le bloque pas si 403
         const { error } = await client.auth.signOut();
         if (error) {
-          alert("Erreur déconnexion : " + error.message);
-        } else {
-          // on force un reload pour être sûr sur GitHub Pages
-          window.location.reload();
+          console.warn(
+            "Erreur Supabase signOut (ignorée sur GitHub) :",
+            error.message
+          );
         }
+
+        // 3. On force un refresh pour être sûr
+        window.location.reload();
       }
     });
   }
