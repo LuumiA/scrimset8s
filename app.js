@@ -74,6 +74,7 @@ client.auth.onAuthStateChange((event, session) => {
   loadCurrentTeam().then(() => {
     loadMyMatches();
     loadOpenScrims();
+    loadLeaderboard();
   });
 });
 
@@ -193,8 +194,11 @@ async function acceptScrim(id) {
 }
 
 async function loadMyMatches() {
+  const list = document.getElementById("my-matches");
+  list.innerHTML = "";
+
   if (!currentTeam) {
-    document.getElementById("my-matches").innerText = "Pas encore d'équipe.";
+    list.innerText = "Pas encore d'équipe.";
     return;
   }
 
@@ -204,26 +208,136 @@ async function loadMyMatches() {
     .or(`team_a_id.eq.${currentTeam.id},team_b_id.eq.${currentTeam.id}`)
     .order("scheduled_at", { ascending: true });
 
-  const list = document.getElementById("my-matches");
-  list.innerHTML = "";
-
   if (error) {
     list.innerText = "Erreur chargement matchs: " + error.message;
     return;
   }
 
-  if (!data.length) {
+  if (!data || !data.length) {
     list.innerText = "Aucun match pour l'instant.";
     return;
   }
 
   data.forEach((scrim) => {
     const li = document.createElement("li");
-    const vs =
-      scrim.team_a_id === currentTeam.id
-        ? "Adversaire (team B)"
-        : "Adversaire (team A)";
-    li.textContent = `${scrim.mode} - ${scrim.scheduled_at} - statut: ${scrim.status} - ${vs}`;
+    const isTeamA = scrim.team_a_id === currentTeam.id;
+    const vs = isTeamA ? "Adversaire (team B)" : "Adversaire (team A)";
+
+    let text = `${scrim.mode} - ${scrim.scheduled_at} - statut: ${scrim.status} - ${vs}`;
+
+    if (scrim.status === "finished") {
+      text += ` | Score: ${scrim.score_team_a} - ${scrim.score_team_b}`;
+      li.textContent = text;
+      list.appendChild(li);
+      return;
+    }
+
+    li.textContent = text;
+
+    if (scrim.status === "accepted") {
+      const inputA = document.createElement("input");
+      inputA.type = "number";
+      inputA.min = 0;
+      inputA.placeholder = "Score A";
+
+      const inputB = document.createElement("input");
+      inputB.type = "number";
+      inputB.min = 0;
+      inputB.placeholder = "Score B";
+
+      const btn = document.createElement("button");
+      btn.textContent = "Reporter le score";
+      btn.onclick = async () => {
+        const sA = parseInt(inputA.value, 10);
+        const sB = parseInt(inputB.value, 10);
+        if (Number.isNaN(sA) || Number.isNaN(sB)) {
+          alert("Entre les deux scores.");
+          return;
+        }
+
+        // 1. Mettre le scrim en finished avec les scores
+        const { error: scrimError } = await client
+          .from("scrims")
+          .update({
+            score_team_a: sA,
+            score_team_b: sB,
+            status: "finished",
+          })
+          .eq("id", scrim.id);
+
+        if (scrimError) {
+          alert("Erreur report score: " + scrimError.message);
+          return;
+        }
+
+        // 2. Calculer les points (V1 simple : 3 pts win, 1 nul, 0 défaite)
+        let pointsA = 0;
+        let pointsB = 0;
+        if (sA > sB) {
+          pointsA = 3;
+        } else if (sB > sA) {
+          pointsB = 3;
+        } else {
+          pointsA = 1;
+          pointsB = 1;
+        }
+
+        // 3. Appliquer les points aux deux teams
+        const updates = [];
+
+        if (pointsA > 0) {
+          updates.push(
+            client.rpc("increment_team_points", {
+              team_id_input: scrim.team_a_id,
+              points_input: pointsA,
+            })
+          );
+        }
+
+        if (pointsB > 0) {
+          updates.push(
+            client.rpc("increment_team_points", {
+              team_id_input: scrim.team_b_id,
+              points_input: pointsB,
+            })
+          );
+        }
+
+        await Promise.all(updates);
+
+        loadMyMatches();
+        loadLeaderboard();
+      };
+
+      li.appendChild(document.createTextNode(" "));
+      li.appendChild(inputA);
+      li.appendChild(inputB);
+      li.appendChild(btn);
+    }
+
+    list.appendChild(li);
+  });
+}
+
+async function loadLeaderboard() {
+  const list = document.getElementById("leaderboard");
+  if (!list) return;
+
+  const { data, error } = await client
+    .from("teams")
+    .select("name, points")
+    .order("points", { ascending: false });
+
+  list.innerHTML = "";
+
+  if (error) {
+    list.innerText = "Erreur classement: " + error.message;
+    return;
+  }
+
+  data.forEach((team) => {
+    const li = document.createElement("li");
+    li.textContent = `${team.name} - ${team.points} pts`;
     list.appendChild(li);
   });
 }
