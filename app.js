@@ -10,7 +10,6 @@ const client = createClient(supabaseUrl, supabaseKey);
 let currentUser = null;
 let currentTeam = null;
 const LOCAL_AUTH_KEY = "bo7_is_logged_in";
-let justLoggedOut = false;
 
 // ---------- UI AUTH (email topbar + popup) ----------
 
@@ -66,10 +65,18 @@ async function handleSignIn(e) {
     status.innerText = "Erreur connexion: " + error.message;
   } else {
     status.innerText = "Connecté en tant que " + email;
-    closeAuth();
-    console.log(data);
+
+    // On considère maintenant l'utilisateur comme connecté côté front
+    currentUser = data.user;
     localStorage.setItem(LOCAL_AUTH_KEY, "1");
-    justLoggedOut = false;
+
+    updateUserEmail();
+    closeAuth();
+
+    await loadCurrentTeam();
+    await loadMyMatches();
+    await loadOpenScrims();
+    await loadLeaderboard();
   }
 }
 
@@ -414,6 +421,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     currentUser = null;
     currentTeam = null;
     updateUserEmail();
+  } else {
+    // Si tu veux recharger les données quand tu considères que la session existe côté front :
+    updateUserEmail();
+    await loadCurrentTeam();
+    await loadMyMatches();
+    await loadOpenScrims();
+    await loadLeaderboard();
   }
 
   if (openAuthBtn) {
@@ -422,7 +436,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         openAuth();
       } else {
         // Déconnexion front-only
-        justLoggedOut = true;
         currentUser = null;
         currentTeam = null;
         localStorage.removeItem(LOCAL_AUTH_KEY);
@@ -481,44 +494,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
   }
-});
-
-// ---------- SUPABASE: LISTEN AUTH STATE ----------
-
-client.auth.onAuthStateChange((event, session) => {
-  console.log("AUTH EVENT =", event, "SESSION =", session);
-
-  const hasLocalSession = localStorage.getItem(LOCAL_AUTH_KEY) === "1";
-
-  // Si on vient de cliquer sur Déconnexion, on ignore cet event
-  if (justLoggedOut) {
-    currentUser = null;
-    updateUserEmail();
-    return;
-  }
-
-  // Si le front n'a pas de session locale et que c'est l'INITIAL_SESSION, on ignore
-  if (!hasLocalSession && event === "INITIAL_SESSION") {
-    currentUser = null;
-    updateUserEmail();
-    return;
-  }
-
-  currentUser = session?.user || null;
-
-  if (currentUser) {
-    localStorage.setItem(LOCAL_AUTH_KEY, "1");
-  } else {
-    localStorage.removeItem(LOCAL_AUTH_KEY);
-  }
-
-  updateUserEmail();
-
-  loadCurrentTeam().then(() => {
-    loadMyMatches();
-    loadOpenScrims();
-    loadLeaderboard();
-  });
 });
 
 // ---------- MEMBRES D'ÉQUIPE ----------
