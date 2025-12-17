@@ -6,6 +6,8 @@ body {
   margin: 0;
 }
 
+/* TOPBAR */
+
 .topbar {
   display: flex;
   align-items: center;
@@ -124,10 +126,6 @@ body {
   margin-bottom: 18px;
 }
 
-.auth-panel {
-  margin-bottom: 18px;
-}
-
 .auth-columns {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -184,4 +182,55 @@ ol {
 
 .scrim-list li {
   margin-bottom: 6px;
+}
+
+/* Overlay auth (popup au milieu, sans toucher au fond) */
+
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6); /* léger voile sombre */
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.auth-overlay.visible {
+  display: flex;
+}
+
+.auth-modal {
+  width: 100%;
+  max-width: 720px;
+  background: #020617;
+  border-radius: 12px;
+  border: 1px solid #1f2937;
+  padding: 18px 20px 20px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+}
+
+.auth-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.auth-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.close-btn:hover {
+  color: #e5e7eb;
 }
