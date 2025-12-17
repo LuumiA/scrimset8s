@@ -10,6 +10,7 @@ const client = createClient(supabaseUrl, supabaseKey);
 let currentUser = null;
 let currentTeam = null;
 const LOCAL_AUTH_KEY = "bo7_is_logged_in";
+let justLoggedOut = false;
 
 // ---------- UI AUTH (email topbar + popup) ----------
 
@@ -67,6 +68,8 @@ async function handleSignIn(e) {
     status.innerText = "Connecté en tant que " + email;
     closeAuth();
     console.log(data);
+    localStorage.setItem(LOCAL_AUTH_KEY, "1");
+    justLoggedOut = false;
   }
 }
 
@@ -418,6 +421,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!currentUser) {
         openAuth();
       } else {
+        // Déconnexion front-only
+        justLoggedOut = true;
         currentUser = null;
         currentTeam = null;
         localStorage.removeItem(LOCAL_AUTH_KEY);
@@ -485,14 +490,20 @@ client.auth.onAuthStateChange((event, session) => {
 
   const hasLocalSession = localStorage.getItem(LOCAL_AUTH_KEY) === "1";
 
-  // Si le front dit "déconnecté", on ignore TOUTES les sessions Supabase
-  if (!hasLocalSession) {
+  // Si on vient de cliquer sur Déconnexion, on ignore cet event
+  if (justLoggedOut) {
     currentUser = null;
     updateUserEmail();
     return;
   }
 
-  // Sinon, on suit Supabase normalement
+  // Si le front n'a pas de session locale et que c'est l'INITIAL_SESSION, on ignore
+  if (!hasLocalSession && event === "INITIAL_SESSION") {
+    currentUser = null;
+    updateUserEmail();
+    return;
+  }
+
   currentUser = session?.user || null;
 
   if (currentUser) {
