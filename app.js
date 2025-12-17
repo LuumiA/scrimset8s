@@ -218,7 +218,7 @@ async function loadLeaderboard() {
 async function loadOpenScrims() {
   const { data, error } = await client
     .from("scrims")
-    .select("id, mode, scheduled_at, status")
+    .select("id, mode, scheduled_at, status, team_a_id")
     .eq("status", "open")
     .order("scheduled_at", { ascending: true });
 
@@ -235,6 +235,21 @@ async function loadOpenScrims() {
     return;
   }
 
+  // Récupérer les noms d’équipes pour toutes les team_a_id
+  const teamIds = [...new Set(data.map((s) => s.team_a_id).filter(Boolean))];
+
+  let teamsById = {};
+  if (teamIds.length) {
+    const { data: teams } = await client
+      .from("teams")
+      .select("id, name")
+      .in("id", teamIds);
+
+    if (teams) {
+      teamsById = Object.fromEntries(teams.map((t) => [t.id, t.name]));
+    }
+  }
+
   data.forEach((scrim) => {
     const li = document.createElement("li");
     li.className = "scrim-card scrim-card-hover";
@@ -242,6 +257,11 @@ async function loadOpenScrims() {
     const header = document.createElement("div");
     header.className = "scrim-card-header";
     header.textContent = scrim.mode;
+
+    const teamLine = document.createElement("div");
+    teamLine.className = "scrim-card-team";
+    const teamName = teamsById[scrim.team_a_id] || "Équipe inconnue";
+    teamLine.textContent = `Équipe : ${teamName}`;
 
     const meta = document.createElement("div");
     meta.className = "scrim-card-meta";
@@ -251,12 +271,20 @@ async function loadOpenScrims() {
     footer.className = "scrim-card-footer";
 
     const btn = document.createElement("button");
-    btn.textContent = "Accepter le scrim";
-    btn.onclick = () => acceptScrim(scrim.id);
+
+    if (currentTeam && scrim.team_a_id === currentTeam.id) {
+      btn.textContent = "Scrim créé par ta team";
+      btn.disabled = true;
+      btn.classList.add("button-disabled"); // optionnel pour le style
+    } else {
+      btn.textContent = "Accepter le scrim";
+      btn.onclick = () => acceptScrim(scrim.id);
+    }
 
     footer.appendChild(btn);
 
     li.appendChild(header);
+    li.appendChild(teamLine);
     li.appendChild(meta);
     li.appendChild(footer);
     list.appendChild(li);
