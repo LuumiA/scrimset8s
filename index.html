@@ -26,56 +26,64 @@
     </header>
 
     <main class="main">
-      <!-- Panneau Auth -->
-      <section class="panel auth-panel" id="auth-panel">
-        <div class="auth-columns">
-          <div class="section">
-            <h2>Inscription</h2>
-            <form id="signup-form">
-              <input
-                type="email"
-                id="signup-email"
-                placeholder="Email"
-                required
-              />
-              <input
-                type="password"
-                id="signup-password"
-                placeholder="Mot de passe"
-                required
-              />
-              <button type="submit">Créer un compte</button>
-            </form>
+      <!-- Overlay Auth -->
+      <div id="auth-overlay" class="auth-overlay">
+        <div class="auth-modal">
+          <div class="auth-header">
+            <h2>Connexion / Inscription</h2>
+            <button id="close-auth" class="close-btn">×</button>
           </div>
 
-          <div class="section">
-            <h2>Connexion</h2>
-            <form id="login-form">
-              <input
-                type="email"
-                id="login-email"
-                placeholder="Email"
-                required
-              />
-              <input
-                type="password"
-                id="login-password"
-                placeholder="Mot de passe"
-                required
-              />
-              <button type="submit">Se connecter</button>
-            </form>
-            <div id="status"></div>
+          <div class="auth-columns">
+            <div class="section">
+              <h3>Inscription</h3>
+              <form id="signup-form">
+                <input
+                  type="email"
+                  id="signup-email"
+                  placeholder="Email"
+                  required
+                />
+                <input
+                  type="password"
+                  id="signup-password"
+                  placeholder="Mot de passe"
+                  required
+                />
+                <button type="submit">Créer un compte</button>
+              </form>
+            </div>
+
+            <div class="section">
+              <h3>Connexion</h3>
+              <form id="login-form">
+                <input
+                  type="email"
+                  id="login-email"
+                  placeholder="Email"
+                  required
+                />
+                <input
+                  type="password"
+                  id="login-password"
+                  placeholder="Mot de passe"
+                  required
+                />
+                <button type="submit">Se connecter</button>
+              </form>
+              <div id="status"></div>
+            </div>
           </div>
         </div>
-      </section>
+      </div>
 
       <!-- SECTION SCRIMS -->
       <section id="scrims-section" class="panel visible">
         <h1 class="page-title">Scrims & Classement</h1>
 
         <div class="section-grid">
-          <div class="section">
+          <!-- Création équipe (visible seulement si pas d'équipe) -->
+          <div class="section" id="team-create-section">
             <h2>Créer une équipe</h2>
             <form id="team-form">
               <input
@@ -87,6 +95,16 @@
               <button type="submit">Créer l'équipe</button>
             </form>
             <div id="team-status"></div>
+          </div>
+
+          <!-- Infos équipe (visible seulement si équipe existante) -->
+          <div class="section" id="team-info-section" style="display: none">
+            <h2>Mon équipe</h2>
+            <p id="team-name-display"></p>
+            <ul id="team-members"></ul>
+
+            <button id="rename-team-btn">Renommer l'équipe</button>
+            <button id="delete-team-btn">Supprimer l'équipe</button>
           </div>
 
           <div class="section">
