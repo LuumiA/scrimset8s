@@ -483,14 +483,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 client.auth.onAuthStateChange((event, session) => {
   console.log("AUTH EVENT =", event, "SESSION =", session);
 
-  const hadLocalSession = localStorage.getItem(LOCAL_AUTH_KEY) === "1";
+  const hasLocalSession = localStorage.getItem(LOCAL_AUTH_KEY) === "1";
 
-  if (!hadLocalSession && event === "INITIAL_SESSION") {
+  // Si le front dit "déconnecté", on ignore TOUTES les sessions Supabase
+  if (!hasLocalSession) {
     currentUser = null;
     updateUserEmail();
     return;
   }
 
+  // Sinon, on suit Supabase normalement
   currentUser = session?.user || null;
 
   if (currentUser) {
