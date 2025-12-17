@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>BO7 Scrims</title>
+  </head>
+  <body>
+    <h1>BO7 Scrims – Auth</h1>
+
+    <form id="signup-form">
+      <h2>Inscription</h2>
+      <input type="email" id="signup-email" placeholder="Email" required />
+      <input
+        type="password"
+        id="signup-password"
+        placeholder="Mot de passe"
+        required
+      />
+      <button type="submit">Créer un compte</button>
+    </form>
+
+    <form id="login-form">
+      <h2>Connexion</h2>
+      <input type="email" id="login-email" placeholder="Email" required />
+      <input
+        type="password"
+        id="login-password"
+        placeholder="Mot de passe"
+        required
+      />
+      <button type="submit">Se connecter</button>
+    </form>
+
+    <div id="status"></div>
+
+    <hr />
+
+    <h2>Créer une équipe</h2>
+    <form id="team-form">
+      <input
+        type="text"
+        id="team-name"
+        placeholder="Nom de l'équipe"
+        required
+      />
+      <button type="submit">Créer l'équipe</button>
+    </form>
+
+    <hr />
+
+    <h2>Créer un scrim</h2>
+    <form id="scrim-form">
+      <input type="datetime-local" id="scrim-time" required />
+      <input
+        type="text"
+        id="scrim-mode"
+        placeholder="Mode (ex: CDL BO3)"
+        required
+      />
+      <button type="submit">Créer le scrim</button>
+    </form>
+    <div id="scrim-status"></div>
+
+    <h2>Scrims ouverts</h2>
+    <ul id="scrim-list"></ul>
+
+    <hr />
+
+    <h2>Mes matchs</h2>
+    <ul id="my-matches"></ul>
+
+    <div id="team-status"></div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
