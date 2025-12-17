@@ -234,3 +234,25 @@ ol {
 .close-btn:hover {
   color: #e5e7eb;
 }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Le bloc logo + nav prend toute la largeur pour pouvoir centrer la nav */
+.topbar-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+/* Centre réellement les boutons dans la barre du haut */
+.nav {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  margin-right: auto; /* centre dans topbar-left */
+  justify-content: center;
+}
