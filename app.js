@@ -192,10 +192,33 @@ document.getElementById("scrim-form").addEventListener("submit", async (e) => {
   }
 });
 
+async function loadLeaderboard() {
+  const list = document.getElementById("leaderboard");
+  if (!list) return;
+
+  const { data, error } = await client
+    .from("teams")
+    .select("name, points")
+    .order("points", { ascending: false });
+
+  list.innerHTML = "";
+
+  if (error) {
+    list.innerText = "Erreur classement: " + error.message;
+    return;
+  }
+
+  data.forEach((team) => {
+    const li = document.createElement("li");
+    li.textContent = `${team.name} - ${team.points} pts`;
+    list.appendChild(li);
+  });
+}
+
 async function loadOpenScrims() {
   const { data, error } = await client
     .from("scrims")
-    .select("*")
+    .select("id, mode, scheduled_at, status")
     .eq("status", "open")
     .order("scheduled_at", { ascending: true });
 
@@ -207,16 +230,35 @@ async function loadOpenScrims() {
     return;
   }
 
+  if (!data || !data.length) {
+    list.innerText = "Aucun scrim ouvert pour le moment.";
+    return;
+  }
+
   data.forEach((scrim) => {
     const li = document.createElement("li");
-    li.textContent = `${scrim.mode} - ${scrim.scheduled_at}`;
+    li.className = "scrim-card scrim-card-hover";
+
+    const header = document.createElement("div");
+    header.className = "scrim-card-header";
+    header.textContent = scrim.mode;
+
+    const meta = document.createElement("div");
+    meta.className = "scrim-card-meta";
+    meta.textContent = `${scrim.scheduled_at} • ${scrim.status}`;
+
+    const footer = document.createElement("div");
+    footer.className = "scrim-card-footer";
 
     const btn = document.createElement("button");
-    btn.textContent = "Accepter";
+    btn.textContent = "Accepter le scrim";
     btn.onclick = () => acceptScrim(scrim.id);
 
-    li.appendChild(document.createTextNode(" "));
-    li.appendChild(btn);
+    footer.appendChild(btn);
+
+    li.appendChild(header);
+    li.appendChild(meta);
+    li.appendChild(footer);
     list.appendChild(li);
   });
 }
@@ -365,60 +407,13 @@ async function loadMyMatches() {
   });
 }
 
-async function loadLeaderboard() {
-  const list = document.getElementById("leaderboard");
-  if (!list) return;
-
-  const { data, error } = await client
-    .from("teams")
-    .select("name, points")
-    .order("points", { ascending: false });
-
-  list.innerHTML = "";
-
-  if (error) {
-    list.innerText = "Erreur classement: " + error.message;
-    return;
-  }
-
-  data.forEach((team) => {
-    const li = document.createElement("li");
-    li.textContent = `${team.name} - ${team.points} pts`;
-    list.appendChild(li);
-  });
-}
-
-async function loadLeaderboardHome() {
-  const list = document.getElementById("leaderboard-home");
-  if (!list) return;
-
-  const { data, error } = await client
-    .from("teams")
-    .select("name, points")
-    .order("points", { ascending: false })
-    .limit(10);
-
-  list.innerHTML = "";
-
-  if (error) {
-    list.innerText = "Erreur classement: " + error.message;
-    return;
-  }
-
-  data.forEach((team) => {
-    const li = document.createElement("li");
-    li.textContent = `${team.name} - ${team.points} pts`;
-    list.appendChild(li);
-  });
-}
-
 async function loadRecentScrims() {
   const list = document.getElementById("recent-scrims");
   if (!list) return;
 
   const { data, error } = await client
     .from("scrims")
-    .select("mode, scheduled_at, status")
+    .select("id, mode, scheduled_at, status")
     .order("scheduled_at", { ascending: false })
     .limit(5);
 
@@ -436,7 +431,26 @@ async function loadRecentScrims() {
 
   data.forEach((scrim) => {
     const li = document.createElement("li");
-    li.textContent = `${scrim.mode} - ${scrim.scheduled_at} - ${scrim.status}`;
+    li.className = "scrim-card scrim-card-hover";
+
+    const header = document.createElement("div");
+    header.className = "scrim-card-header";
+    header.textContent = scrim.mode;
+
+    const meta = document.createElement("div");
+    meta.className = "scrim-card-meta";
+    meta.textContent = `${scrim.scheduled_at} • ${scrim.status}`;
+
+    // Option cool : clic sur la card → onglet Scrims
+    li.addEventListener("click", () => {
+      const scrimsBtn = document.querySelector(
+        '.nav-link[data-section="scrims-section"]'
+      );
+      if (scrimsBtn) scrimsBtn.click();
+    });
+
+    li.appendChild(header);
+    li.appendChild(meta);
     list.appendChild(li);
   });
 }
@@ -458,6 +472,35 @@ document.querySelectorAll(".nav-link[data-section]").forEach((btn) => {
     document.getElementById(target).classList.add("visible");
   });
 });
+
+async function loadLeaderboardHome() {
+  const list = document.getElementById("leaderboard-home");
+  if (!list) return;
+
+  const { data, error } = await client
+    .from("teams")
+    .select("name, points")
+    .order("points", { ascending: false })
+    .limit(10);
+
+  list.innerHTML = "";
+
+  if (error) {
+    list.innerText = "Erreur classement: " + error.message;
+    return;
+  }
+
+  if (!data || !data.length) {
+    list.innerText = "Aucune équipe pour l'instant.";
+    return;
+  }
+
+  data.forEach((team) => {
+    const li = document.createElement("li");
+    li.textContent = `${team.name} - ${team.points} pts`;
+    list.appendChild(li);
+  });
+}
 
 // ---------- BOUTON LOGIN / DÉCONNEXION + CROIX + FORM ----------
 
