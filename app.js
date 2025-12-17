@@ -406,26 +406,22 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!currentUser) {
         openAuth();
       } else {
-        // 1. On reset tout côté front
+        const { error } = await client.auth.signOut();
+
+        if (error) {
+          console.error("Erreur déconnexion", error.message);
+          alert("Erreur déconnexion : " + error.message);
+          return; // on ne force pas le reset, on laisse l'état connecté
+        }
+
+        // ici seulement si signOut a vraiment réussi
         currentUser = null;
         updateUserEmail();
         currentTeam = null;
-        loadCurrentTeam();
-        loadMyMatches();
-        loadOpenScrims();
-        loadLeaderboard();
-
-        // 2. On tente quand même le signOut, mais on ne le bloque pas si 403
-        const { error } = await client.auth.signOut();
-        if (error) {
-          console.warn(
-            "Erreur Supabase signOut (ignorée sur GitHub) :",
-            error.message
-          );
-        }
-
-        // 3. On force un refresh pour être sûr
-        window.location.reload();
+        await loadCurrentTeam();
+        await loadMyMatches();
+        await loadOpenScrims();
+        await loadLeaderboard();
       }
     });
   }
@@ -483,6 +479,8 @@ document.addEventListener("DOMContentLoaded", () => {
 // ---------- SUPABASE: LISTEN AUTH STATE ----------
 
 client.auth.onAuthStateChange((event, session) => {
+  console.log("AUTH EVENT =", event, "SESSION =", session);
+
   currentUser = session?.user || null;
   updateUserEmail();
 
