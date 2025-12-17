@@ -94,11 +94,28 @@ async function loadCurrentTeam() {
     return;
   }
 
+  // Cherche la team via team_members
+  const { data: memberRow, error: memberError } = await client
+    .from("team_members")
+    .select("team_id")
+    .eq("user_id", currentUser.id)
+    .maybeSingle();
+
+  if (memberError || !memberRow) {
+    currentTeam = null;
+    const createSection = document.getElementById("team-create-section");
+    const infoSection = document.getElementById("team-info-section");
+    if (createSection && infoSection) {
+      createSection.style.display = "block";
+      infoSection.style.display = "none";
+    }
+    return;
+  }
+
   const { data, error } = await client
     .from("teams")
     .select("*")
-    .eq("owner_id", currentUser.id)
-    .limit(1)
+    .eq("id", memberRow.team_id)
     .maybeSingle();
 
   if (error) {
@@ -139,18 +156,29 @@ document.getElementById("team-form").addEventListener("submit", async (e) => {
 
   const { data, error } = await client
     .from("teams")
-    .insert([{ name, owner_id: currentUser.id }])
+    .insert([{ name }])
     .select();
 
-  if (error) {
+  if (error || !data || !data[0]) {
     document.getElementById("team-status").innerText =
-      "Erreur création équipe: " + error.message;
+      "Erreur création équipe: " + (error?.message || "");
   } else {
+    const team = data[0];
+
+    // Ajoute le créateur comme owner dans team_members
+    await client.from("team_members").insert([
+      {
+        team_id: team.id,
+        user_id: currentUser.id,
+        role: "owner",
+      },
+    ]);
+
     document.getElementById("team-status").innerText =
-      "Équipe créée: " + data[0].name;
-    console.log("Team:", data[0]);
-    loadCurrentTeam();
-    loadLeaderboard();
+      "Équipe créée: " + team.name;
+    console.log("Team:", team);
+    await loadCurrentTeam();
+    await loadLeaderboard();
   }
 });
 
@@ -562,6 +590,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const loginForm = document.getElementById("login-form");
   const renameBtn = document.getElementById("rename-team-btn");
   const deleteBtn = document.getElementById("delete-team-btn");
+  const inviteBtn = document.getElementById("invite-btn");
 
   const hadLocalSession = localStorage.getItem(LOCAL_AUTH_KEY) === "1";
   if (!hadLocalSession) {
@@ -652,6 +681,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         loadLeaderboard();
       }
     });
+
+    if (inviteBtn) {
+      inviteBtn.addEventListener("click", inviteMemberByEmail);
+    }
   }
 
   const ctaStart = document.getElementById("cta-start");
@@ -687,10 +720,18 @@ async function loadTeamMembers() {
 
   const { data, error } = await client
     .from("team_members")
-    .select("user_email")
+    .select(
+      `
+      id,
+      role,
+      user_id,
+      profiles:user_id ( email )
+    `
+    )
     .eq("team_id", currentTeam.id);
 
   if (error) {
+    console.error("loadTeamMembers error", error);
     list.innerHTML = "<li>Erreur chargement membres.</li>";
     return;
   }
@@ -702,7 +743,116 @@ async function loadTeamMembers() {
 
   data.forEach((m) => {
     const li = document.createElement("li");
-    li.textContent = m.user_email;
+    const email = m.profiles?.email || "(email inconnu)";
+    const roleLabel = m.role === "owner" ? " (owner)" : "";
+    li.textContent = `${email}${roleLabel}`;
+
+    if (
+      currentUser &&
+      m.profiles?.email &&
+      m.profiles.email !== currentUser.email
+    ) {
+      const removeBtn = document.createElement("button");
+      removeBtn.textContent = "Retirer";
+      removeBtn.onclick = async () => {
+        const { error: delError } = await client
+          .from("team_members")
+          .delete()
+          .eq("id", m.id);
+
+        if (delError) {
+          alert("Erreur retrait joueur.");
+          console.error(delError);
+          return;
+        }
+        loadTeamMembers();
+      };
+      li.appendChild(document.createTextNode(" "));
+      li.appendChild(removeBtn);
+    }
+
     list.appendChild(li);
   });
+}
+
+async function inviteMemberByEmail() {
+  const emailInput = document.getElementById("invite-email");
+  const status = document.getElementById("invite-status");
+  if (!emailInput || !status) return;
+
+  const email = emailInput.value.trim();
+  if (!email) {
+    status.textContent = "Entre un email.";
+    return;
+  }
+  if (!currentTeam || !currentUser) {
+    status.textContent = "Tu dois avoir une équipe.";
+    return;
+  }
+
+  // Vérifie que tu es owner
+  const { data: meRow } = await client
+    .from("team_members")
+    .select("role")
+    .eq("team_id", currentTeam.id)
+    .eq("user_id", currentUser.id)
+    .maybeSingle();
+
+  if (!meRow || meRow.role !== "owner") {
+    status.textContent = "Seul le owner peut ajouter des joueurs.";
+    return;
+  }
+
+  // Vérifie la limite de 4
+  const { count: memberCount } = await client
+    .from("team_members")
+    .select("*", { count: "exact", head: true })
+    .eq("team_id", currentTeam.id);
+
+  if (memberCount >= 4) {
+    status.textContent = "Équipe déjà pleine (4 joueurs max).";
+    return;
+  }
+
+  // Trouve l'utilisateur par email dans profiles
+  const { data: userRow, error: userError } = await client
+    .from("profiles")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (userError || !userRow) {
+    status.textContent = "Aucun compte avec cet email.";
+    return;
+  }
+
+  // Vérifie qu'il n'a pas déjà une team
+  const { data: existingMember } = await client
+    .from("team_members")
+    .select("id")
+    .eq("user_id", userRow.id)
+    .maybeSingle();
+
+  if (existingMember) {
+    status.textContent = "Ce joueur est déjà dans une équipe.";
+    return;
+  }
+
+  const { error: insertError } = await client.from("team_members").insert([
+    {
+      team_id: currentTeam.id,
+      user_id: userRow.id,
+      role: "member",
+    },
+  ]);
+
+  if (insertError) {
+    status.textContent = "Erreur ajout joueur.";
+    console.error(insertError);
+    return;
+  }
+
+  status.textContent = "Joueur ajouté à l'équipe.";
+  emailInput.value = "";
+  loadTeamMembers();
 }
