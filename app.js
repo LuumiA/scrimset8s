@@ -9,6 +9,7 @@ const client = createClient(supabaseUrl, supabaseKey);
 
 let currentUser = null;
 let currentTeam = null;
+const LOCAL_AUTH_KEY = "bo7_is_logged_in";
 
 // ---------- UI AUTH (email topbar + popup) ----------
 
@@ -395,29 +396,36 @@ document.querySelectorAll(".nav-link[data-section]").forEach((btn) => {
 
 // ---------- BOUTON LOGIN / DÉCONNEXION + CROIX + FORM ----------
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const openAuthBtn = document.getElementById("open-auth");
   const closeAuthBtn = document.getElementById("close-auth");
   const signupForm = document.getElementById("signup-form");
   const loginForm = document.getElementById("login-form");
+  const renameBtn = document.getElementById("rename-team-btn");
+  const deleteBtn = document.getElementById("delete-team-btn");
 
+  // 1) Gestion du flag local pour savoir si on considère l'utilisateur connecté
+  const hadLocalSession = localStorage.getItem(LOCAL_AUTH_KEY) === "1";
+  if (!hadLocalSession) {
+    // pas de session front → UI en mode déconnecté
+    currentUser = null;
+    currentTeam = null;
+    updateUserEmail();
+  }
+
+  // 2) Bouton Login / Déconnexion
   if (openAuthBtn) {
     openAuthBtn.addEventListener("click", async () => {
       if (!currentUser) {
+        // pas connecté côté front → ouvrir la popup
         openAuth();
       } else {
-        const { error } = await client.auth.signOut();
-
-        if (error) {
-          console.error("Erreur déconnexion", error.message);
-          alert("Erreur déconnexion : " + error.message);
-          return; // on ne force pas le reset, on laisse l'état connecté
-        }
-
-        // ici seulement si signOut a vraiment réussi
+        // Déconnexion "front-only"
         currentUser = null;
-        updateUserEmail();
         currentTeam = null;
+        localStorage.removeItem(LOCAL_AUTH_KEY);
+
+        updateUserEmail();
         await loadCurrentTeam();
         await loadMyMatches();
         await loadOpenScrims();
@@ -426,18 +434,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // 3) Croix de la popup
   if (closeAuthBtn) {
     closeAuthBtn.addEventListener("click", () => {
       closeAuth();
     });
   }
 
+  // 4) Formulaires signup / login
   if (signupForm) signupForm.addEventListener("submit", handleSignUp);
   if (loginForm) loginForm.addEventListener("submit", handleSignIn);
 
-  const renameBtn = document.getElementById("rename-team-btn");
-  const deleteBtn = document.getElementById("delete-team-btn");
-
+  // 5) Boutons équipe (renommer / supprimer)
   if (renameBtn) {
     renameBtn.addEventListener("click", async () => {
       if (!currentTeam) return;
@@ -482,6 +490,13 @@ client.auth.onAuthStateChange((event, session) => {
   console.log("AUTH EVENT =", event, "SESSION =", session);
 
   currentUser = session?.user || null;
+
+  if (currentUser) {
+    localStorage.setItem(LOCAL_AUTH_KEY, "1");
+  } else {
+    localStorage.removeItem(LOCAL_AUTH_KEY);
+  }
+
   updateUserEmail();
 
   loadCurrentTeam().then(() => {
