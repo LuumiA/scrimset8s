@@ -514,11 +514,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const hadLocalSession = localStorage.getItem(LOCAL_AUTH_KEY) === "1";
   if (!hadLocalSession) {
+    // Aucun flag local → on démarre déconnecté
     currentUser = null;
     currentTeam = null;
     updateUserEmail();
   } else {
-    // Si tu veux recharger les données quand tu considères que la session existe côté front :
+    // Il y avait une session front → on redemande la vraie session à Supabase
+    const {
+      data: { session },
+    } = await client.auth.getSession();
+
+    currentUser = session?.user || null;
+
+    if (!currentUser) {
+      // Plus de session Supabase → on nettoie le flag local
+      localStorage.removeItem(LOCAL_AUTH_KEY);
+    }
+
     updateUserEmail();
     await loadCurrentTeam();
     await loadMyMatches();
