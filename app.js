@@ -189,6 +189,10 @@ document.getElementById("scrim-form").addEventListener("submit", async (e) => {
   } else {
     document.getElementById("scrim-status").innerText = "Scrim créé.";
     loadOpenScrims();
+
+    // Reset des champs du formulaire
+    document.getElementById("scrim-time").value = "";
+    document.getElementById("scrim-mode").value = "";
   }
 });
 
