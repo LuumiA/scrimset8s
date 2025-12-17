@@ -388,6 +388,59 @@ async function loadLeaderboard() {
   });
 }
 
+async function loadLeaderboardHome() {
+  const list = document.getElementById("leaderboard-home");
+  if (!list) return;
+
+  const { data, error } = await client
+    .from("teams")
+    .select("name, points")
+    .order("points", { ascending: false })
+    .limit(10);
+
+  list.innerHTML = "";
+
+  if (error) {
+    list.innerText = "Erreur classement: " + error.message;
+    return;
+  }
+
+  data.forEach((team) => {
+    const li = document.createElement("li");
+    li.textContent = `${team.name} - ${team.points} pts`;
+    list.appendChild(li);
+  });
+}
+
+async function loadRecentScrims() {
+  const list = document.getElementById("recent-scrims");
+  if (!list) return;
+
+  const { data, error } = await client
+    .from("scrims")
+    .select("mode, scheduled_at, status")
+    .order("scheduled_at", { ascending: false })
+    .limit(5);
+
+  list.innerHTML = "";
+
+  if (error) {
+    list.innerText = "Erreur chargement scrims: " + error.message;
+    return;
+  }
+
+  if (!data || !data.length) {
+    list.innerText = "Aucun scrim pour l'instant.";
+    return;
+  }
+
+  data.forEach((scrim) => {
+    const li = document.createElement("li");
+    li.textContent = `${scrim.mode} - ${scrim.scheduled_at} - ${scrim.status}`;
+    list.appendChild(li);
+  });
+}
+
 // ---------- NAVIGATION ENTRE SECTIONS ----------
 
 document.querySelectorAll(".nav-link[data-section]").forEach((btn) => {
@@ -494,6 +547,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
   }
+
+  const ctaStart = document.getElementById("cta-start");
+  if (ctaStart) {
+    ctaStart.addEventListener("click", () => {
+      if (!currentUser) {
+        openAuth();
+      } else {
+        const scrimsBtn = document.querySelector(
+          '.nav-link[data-section="scrims-section"]'
+        );
+        if (scrimsBtn) scrimsBtn.click();
+      }
+    });
+  }
+
+  // Charger données d'accueil
+  loadLeaderboardHome();
+  loadRecentScrims();
 });
 
 // ---------- MEMBRES D'ÉQUIPE ----------
