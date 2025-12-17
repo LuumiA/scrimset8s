@@ -77,6 +77,7 @@ async function handleSignIn(e) {
     await loadMyMatches();
     await loadOpenScrims();
     await loadLeaderboard();
+    await loadMyProfile();
   }
 }
 
@@ -591,6 +592,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const renameBtn = document.getElementById("rename-team-btn");
   const deleteBtn = document.getElementById("delete-team-btn");
   const inviteBtn = document.getElementById("invite-btn");
+  const profileForm = document.getElementById("profile-form");
 
   const hadLocalSession = localStorage.getItem(LOCAL_AUTH_KEY) === "1";
   if (!hadLocalSession) {
@@ -616,6 +618,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadMyMatches();
     await loadOpenScrims();
     await loadLeaderboard();
+    await loadMyProfile();
   }
 
   if (openAuthBtn) {
@@ -633,6 +636,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await loadMyMatches();
         await loadOpenScrims();
         await loadLeaderboard();
+        await loadMyProfile();
       }
     });
   }
@@ -701,6 +705,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (inviteBtn) {
     inviteBtn.addEventListener("click", inviteMemberByEmail);
+  }
+
+  if (profileForm) {
+    profileForm.addEventListener("submit", saveMyProfile);
   }
 
   // Charger données d'accueil
@@ -874,4 +882,52 @@ async function inviteMemberByEmail() {
   status.textContent = "Joueur ajouté à l'équipe.";
   emailInput.value = "";
   loadTeamMembers();
+}
+
+// ---------- PROFIL JOUEUR ----------
+
+async function loadMyProfile() {
+  if (!currentUser) return;
+
+  const { data, error } = await client
+    .from("profiles")
+    .select("username, discord, activision_id")
+    .eq("id", currentUser.id)
+    .maybeSingle();
+
+  if (error || !data) return;
+
+  const usernameInput = document.getElementById("profile-username");
+  const discordInput = document.getElementById("profile-discord");
+  const activisionInput = document.getElementById("profile-activision");
+
+  if (usernameInput) usernameInput.value = data.username || "";
+  if (discordInput) discordInput.value = data.discord || "";
+  if (activisionInput) activisionInput.value = data.activision_id || "";
+}
+
+async function saveMyProfile(e) {
+  e.preventDefault();
+  if (!currentUser) return;
+
+  const username = document.getElementById("profile-username").value.trim();
+  const discord = document.getElementById("profile-discord").value.trim();
+  const activision = document.getElementById("profile-activision").value.trim();
+
+  const status = document.getElementById("profile-status");
+
+  const { error } = await client
+    .from("profiles")
+    .update({
+      username,
+      discord,
+      activision_id: activision,
+    })
+    .eq("id", currentUser.id);
+
+  if (error) {
+    status.textContent = "Erreur sauvegarde profil : " + error.message;
+  } else {
+    status.textContent = "Profil mis à jour.";
+  }
 }
