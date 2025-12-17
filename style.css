@@ -1,3 +1,8 @@
+/* =========
+   Base globale
+   ========= */
+
+/* Fond + typo */
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
@@ -6,7 +11,9 @@ body {
   margin: 0;
 }
 
-/* TOPBAR */
+/* =========
+   Topbar / Navigation
+   ========= */
 
 .topbar {
   display: flex;
@@ -21,12 +28,15 @@ body {
   z-index: 10;
 }
 
+/* Bloc logo + nav (permet de centrer la nav) */
 .topbar-left {
   display: flex;
   align-items: center;
   gap: 24px;
+  flex: 1;
 }
 
+/* Logo rond "BO7" */
 .logo {
   padding: 6px 14px;
   border-radius: 999px;
@@ -36,9 +46,13 @@ body {
   letter-spacing: 1px;
 }
 
+/* Nav centrée dans la topbar */
 .nav {
   display: flex;
   gap: 8px;
+  margin-left: auto;
+  margin-right: auto;
+  justify-content: center;
 }
 
 .nav-link {
@@ -62,6 +76,7 @@ body {
   color: #e5e7eb;
 }
 
+/* Email + bouton login */
 .topbar-right {
   display: flex;
   align-items: center;
@@ -82,7 +97,9 @@ body {
   border-color: #38bdf8;
 }
 
-/* MAIN */
+/* =========
+   Layout principal
+   ========= */
 
 .main {
   max-width: 1100px;
@@ -95,8 +112,11 @@ body {
   margin: 0 0 16px;
 }
 
-/* Panels / sections */
+/* =========
+   Panels / Sections
+   ========= */
 
+/* Panels : un seul visible à la fois (JS ajoute .visible) */
 .panel {
   display: none;
 }
@@ -105,6 +125,7 @@ body {
   display: block;
 }
 
+/* Carte générique */
 .section {
   background: rgba(15, 23, 42, 0.95);
   border: 1px solid #1f2937;
@@ -119,6 +140,7 @@ body {
   font-size: 18px;
 }
 
+/* Grille pour blocs (création équipe / scrim) */
 .section-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -126,13 +148,16 @@ body {
   margin-bottom: 18px;
 }
 
+/* Colonnes dans la popup auth */
 .auth-columns {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 16px;
 }
 
-/* Forms */
+/* =========
+   Formulaires
+   ========= */
 
 form {
   margin-bottom: 4px;
@@ -170,6 +195,7 @@ ol {
   padding-left: 20px;
 }
 
+/* Messages d’état */
 #status,
 #team-status,
 #scrim-status {
@@ -178,18 +204,15 @@ ol {
   color: #facc15;
 }
 
-/* Scrim list style */
+/* =========
+   Popup Auth
+   ========= */
 
-.scrim-list li {
-  margin-bottom: 6px;
-}
-
-/* Overlay auth (popup au milieu, sans toucher au fond) */
-
+/* Overlay sombre */
 .auth-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.6); /* léger voile sombre */
+  background: rgba(15, 23, 42, 0.6);
   display: none;
   align-items: center;
   justify-content: center;
@@ -200,6 +223,7 @@ ol {
   display: flex;
 }
 
+/* Fenêtre d’auth */
 .auth-modal {
   width: 100%;
   max-width: 720px;
@@ -235,29 +259,11 @@ ol {
   color: #e5e7eb;
 }
 
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+/* =========
+   Scrims en cards
+   ========= */
 
-/* Le bloc logo + nav prend toute la largeur pour pouvoir centrer la nav */
-.topbar-left {
-  display: flex;
-  align-items: center;
-  flex: 1;
-}
-
-/* Centre réellement les boutons dans la barre du haut */
-.nav {
-  display: flex;
-  gap: 8px;
-  margin-left: auto;
-  margin-right: auto; /* centre dans topbar-left */
-  justify-content: center;
-}
-
-/* Layout en grille pour les listes de scrims */
+/* Grille de cards (Accueil + Scrims ouverts) */
 .scrim-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -267,7 +273,7 @@ ol {
   margin: 0;
 }
 
-/* Une card de scrim */
+/* Card de scrim */
 .scrim-card {
   background: #0b1220;
   border-radius: 10px;
@@ -280,43 +286,28 @@ ol {
     border-color 0.15s ease;
 }
 
-/* hover pour les cards interactives */
+/* Hover interactif (pour les cards cliquables) */
 .scrim-card-hover:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 25px rgba(15, 23, 42, 0.8);
   border-color: #6366f1;
 }
 
+/* Titre / mode */
 .scrim-card-header {
   font-size: 13px;
   font-weight: 600;
   color: #e5e7eb;
 }
 
+/* Infos secondaires (date, statut) */
 .scrim-card-meta {
   font-size: 11px;
   color: #9ca3af;
   margin-top: 2px;
 }
 
-.scrim-card-footer {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 6px;
-}
-/* Titre / mode */
-.scrim-card-title {
-  font-weight: 600;
-  font-size: 14px;
-}
-
-/* Sous‑infos (date, statut) */
-.scrim-card-meta {
-  font-size: 12px;
-  color: #9ca3af;
-}
-
-/* Ligne du bas (bouton à droite) */
+/* Ligne du bas (bouton aligné à droite) */
 .scrim-card-footer {
   display: flex;
   justify-content: flex-end;
@@ -329,30 +320,7 @@ ol {
   padding: 4px 10px;
 }
 
-.scrim-card {
-  background: #0b1220;
-  border-radius: 10px;
-  padding: 12px 14px;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  transition: transform 0.15s ease, box-shadow 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.scrim-card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.8);
-  border-color: #6366f1;
-}
-
-.scrim-card-header {
-  font-size: 13px;
-  font-weight: 600;
-  color: #e5e7eb;
-}
-
+/* Layout “VS” si tu l’utilises plus tard */
 .scrim-card-vs {
   display: flex;
   align-items: center;
@@ -387,14 +355,127 @@ ol {
   letter-spacing: 0.08em;
 }
 
-.scrim-card-meta {
-  font-size: 11px;
-  color: #9ca3af;
-  margin-top: 2px;
+/* =========
+   Responsive
+   ========= */
+
+/* Tablettes (~ <= 1024px) */
+@media (max-width: 1024px) {
+  .topbar {
+    padding: 10px 16px;
+  }
+
+  .main {
+    margin: 16px auto;
+    padding: 0 12px 32px;
+  }
+
+  .page-title {
+    font-size: 22px;
+  }
+
+  .section {
+    padding: 14px 16px;
+  }
 }
 
-.scrim-card-footer {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 6px;
+/* Mobiles (~ <= 768px) */
+@media (max-width: 768px) {
+  /* Topbar en pile, nav sous le logo */
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .topbar-left {
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .logo {
+    font-size: 13px;
+    padding: 4px 10px;
+  }
+
+  .topbar-right {
+    justify-content: flex-end;
+  }
+
+  /* Nav scrollable si beaucoup de boutons */
+  .nav {
+    justify-content: flex-start;
+    margin-left: 0;
+    margin-right: 0;
+    overflow-x: auto;
+  }
+
+  .nav-link {
+    white-space: nowrap;
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+
+  .main {
+    padding: 0 10px 28px;
+  }
+
+  .page-title {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .section {
+    padding: 12px 12px;
+  }
+
+  /* Toutes les grilles passent en une colonne */
+  .section-grid,
+  .auth-columns,
+  .scrim-cards {
+    grid-template-columns: 1fr;
+  }
+
+  /* Cards un peu plus compactes */
+  .scrim-card {
+    padding: 10px 12px;
+  }
+
+  .scrim-card-header {
+    font-size: 14px;
+  }
+
+  .scrim-card-meta {
+    font-size: 12px;
+  }
+
+  /* Popup auth plus petite */
+  .auth-modal {
+    margin: 0 10px;
+    padding: 14px 14px 16px;
+  }
+
+  .auth-header h2 {
+    font-size: 18px;
+  }
+}
+
+/* Petits mobiles (~ <= 480px) */
+@media (max-width: 480px) {
+  .topbar {
+    padding-inline: 10px;
+  }
+
+  .page-title {
+    font-size: 18px;
+  }
+
+  button,
+  input {
+    font-size: 13px;
+  }
+
+  .scrim-card {
+    padding: 8px 10px;
+  }
 }
