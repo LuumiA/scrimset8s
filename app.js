@@ -71,6 +71,8 @@ async function loadCurrentTeam() {
 
 client.auth.onAuthStateChange((event, session) => {
   currentUser = session?.user || null;
+  updateUserEmail();
+
   loadCurrentTeam().then(() => {
     loadMyMatches();
     loadOpenScrims();
@@ -340,4 +342,38 @@ async function loadLeaderboard() {
     li.textContent = `${team.name} - ${team.points} pts`;
     list.appendChild(li);
   });
+}
+
+// Navigation entre sections
+document.querySelectorAll(".nav-link[data-section]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const target = btn.getAttribute("data-section");
+
+    document
+      .querySelectorAll(".nav-link[data-section]")
+      .forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    document
+      .querySelectorAll(".panel")
+      .forEach((sec) => sec.classList.remove("visible"));
+    document.getElementById(target).classList.add("visible");
+  });
+});
+
+// Toggle affichage panneau auth
+const authPanel = document.getElementById("auth-panel");
+const openAuthBtn = document.getElementById("open-auth");
+
+if (openAuthBtn && authPanel) {
+  openAuthBtn.addEventListener("click", () => {
+    authPanel.classList.toggle("visible");
+  });
+}
+
+// Afficher email joueur connecté dans la topbar
+function updateUserEmail() {
+  const span = document.getElementById("user-email");
+  if (!span) return;
+  span.textContent = currentUser ? currentUser.email : "";
 }
