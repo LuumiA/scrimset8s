@@ -2,79 +2,130 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="styles.css" />
     <title>BO7 Scrims</title>
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <h1>BO7 Scrims – Auth</h1>
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="logo">BO7</div>
+        <nav class="nav">
+          <button class="nav-link active" data-section="scrims-section">
+            Scrims
+          </button>
+          <button class="nav-link" data-section="matches-section">
+            Mes matchs
+          </button>
+          <button class="nav-link" disabled>8s (soon)</button>
+        </nav>
+      </div>
+      <div class="topbar-right">
+        <span id="user-email"></span>
+        <button id="open-auth">Login / Inscription</button>
+      </div>
+    </header>
 
-    <form id="signup-form">
-      <h2>Inscription</h2>
-      <input type="email" id="signup-email" placeholder="Email" required />
-      <input
-        type="password"
-        id="signup-password"
-        placeholder="Mot de passe"
-        required
-      />
-      <button type="submit">Créer un compte</button>
-    </form>
+    <main class="main">
+      <!-- Panneau Auth -->
+      <section class="panel auth-panel" id="auth-panel">
+        <div class="auth-columns">
+          <div class="section">
+            <h2>Inscription</h2>
+            <form id="signup-form">
+              <input
+                type="email"
+                id="signup-email"
+                placeholder="Email"
+                required
+              />
+              <input
+                type="password"
+                id="signup-password"
+                placeholder="Mot de passe"
+                required
+              />
+              <button type="submit">Créer un compte</button>
+            </form>
+          </div>
 
-    <form id="login-form">
-      <h2>Connexion</h2>
-      <input type="email" id="login-email" placeholder="Email" required />
-      <input
-        type="password"
-        id="login-password"
-        placeholder="Mot de passe"
-        required
-      />
-      <button type="submit">Se connecter</button>
-    </form>
+          <div class="section">
+            <h2>Connexion</h2>
+            <form id="login-form">
+              <input
+                type="email"
+                id="login-email"
+                placeholder="Email"
+                required
+              />
+              <input
+                type="password"
+                id="login-password"
+                placeholder="Mot de passe"
+                required
+              />
+              <button type="submit">Se connecter</button>
+            </form>
+            <div id="status"></div>
+          </div>
+        </div>
+      </section>
 
-    <div id="status"></div>
+      <!-- SECTION SCRIMS -->
+      <section id="scrims-section" class="panel visible">
+        <h1 class="page-title">Scrims & Classement</h1>
 
-    <hr />
+        <div class="section-grid">
+          <div class="section">
+            <h2>Créer une équipe</h2>
+            <form id="team-form">
+              <input
+                type="text"
+                id="team-name"
+                placeholder="Nom de l'équipe"
+                required
+              />
+              <button type="submit">Créer l'équipe</button>
+            </form>
+            <div id="team-status"></div>
+          </div>
 
-    <h2>Créer une équipe</h2>
-    <form id="team-form">
-      <input
-        type="text"
-        id="team-name"
-        placeholder="Nom de l'équipe"
-        required
-      />
-      <button type="submit">Créer l'équipe</button>
-    </form>
+          <div class="section">
+            <h2>Créer un scrim</h2>
+            <form id="scrim-form">
+              <input type="datetime-local" id="scrim-time" required />
+              <input
+                type="text"
+                id="scrim-mode"
+                placeholder="Mode (ex: CDL BO3)"
+                required
+              />
+              <button type="submit">Créer le scrim</button>
+            </form>
+            <div id="scrim-status"></div>
+          </div>
+        </div>
 
-    <hr />
+        <div class="section">
+          <h2>Scrims ouverts</h2>
+          <ul id="scrim-list" class="scrim-list"></ul>
+        </div>
 
-    <h2>Créer un scrim</h2>
-    <form id="scrim-form">
-      <input type="datetime-local" id="scrim-time" required />
-      <input
-        type="text"
-        id="scrim-mode"
-        placeholder="Mode (ex: CDL BO3)"
-        required
-      />
-      <button type="submit">Créer le scrim</button>
-    </form>
-    <div id="scrim-status"></div>
+        <div class="section">
+          <h2>Classement équipes</h2>
+          <ol id="leaderboard"></ol>
+        </div>
+      </section>
 
-    <h2>Scrims ouverts</h2>
-    <ul id="scrim-list"></ul>
+      <!-- SECTION MES MATCHS -->
+      <section id="matches-section" class="panel">
+        <h1 class="page-title">Mes matchs</h1>
 
-    <hr />
-
-    <h2>Mes matchs</h2>
-    <ul id="my-matches"></ul>
-
-    <hr />
-    <h2>Classement équipes</h2>
-    <ol id="leaderboard"></ol>
-
-    <div id="team-status"></div>
+        <div class="section">
+          <h2>Liste</h2>
+          <ul id="my-matches"></ul>
+        </div>
+      </section>
+    </main>
 
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
