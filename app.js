@@ -667,12 +667,28 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (deleteBtn) {
     deleteBtn.addEventListener("click", async () => {
-      if (!currentTeam) return;
+      if (!currentTeam || !currentUser) return;
+
+      // Vérifie que tu es owner
+      const { data: meRow } = await client
+        .from("team_members")
+        .select("role")
+        .eq("team_id", currentTeam.id)
+        .eq("user_id", currentUser.id)
+        .maybeSingle();
+
+      if (!meRow || meRow.role !== "owner") {
+        alert("Seul le owner peut supprimer l'équipe.");
+        return;
+      }
+
       if (!confirm("Supprimer définitivement l'équipe ?")) return;
+
       const { error } = await client
         .from("teams")
         .delete()
         .eq("id", currentTeam.id);
+
       if (error) {
         alert("Erreur suppression: " + error.message);
       } else {
@@ -681,24 +697,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         loadLeaderboard();
       }
     });
-
-    if (inviteBtn) {
-      inviteBtn.addEventListener("click", inviteMemberByEmail);
-    }
   }
 
-  const ctaStart = document.getElementById("cta-start");
-  if (ctaStart) {
-    ctaStart.addEventListener("click", () => {
-      if (!currentUser) {
-        openAuth();
-      } else {
-        const scrimsBtn = document.querySelector(
-          '.nav-link[data-section="scrims-section"]'
-        );
-        if (scrimsBtn) scrimsBtn.click();
-      }
-    });
+  if (inviteBtn) {
+    inviteBtn.addEventListener("click", inviteMemberByEmail);
   }
 
   // Charger données d'accueil
@@ -718,6 +720,17 @@ async function loadTeamMembers() {
     return;
   }
 
+  // 1) On récupère d'abord le rôle du joueur connecté dans cette team
+  const { data: meRow } = await client
+    .from("team_members")
+    .select("role")
+    .eq("team_id", currentTeam.id)
+    .eq("user_id", currentUser.id)
+    .maybeSingle();
+
+  const isCurrentUserOwner = meRow?.role === "owner";
+
+  // 2) On charge tous les membres avec leur email depuis profiles
   const { data, error } = await client
     .from("team_members")
     .select(
@@ -747,10 +760,16 @@ async function loadTeamMembers() {
     const roleLabel = m.role === "owner" ? " (owner)" : "";
     li.textContent = `${email}${roleLabel}`;
 
+    // 3) Bouton "Retirer" uniquement si :
+    //    - le joueur connecté est owner
+    //    - ce n'est pas lui-même
+    //    - la cible n'est pas un owner
     if (
+      isCurrentUserOwner &&
       currentUser &&
       m.profiles?.email &&
-      m.profiles.email !== currentUser.email
+      m.profiles.email !== currentUser.email &&
+      m.role !== "owner"
     ) {
       const removeBtn = document.createElement("button");
       removeBtn.textContent = "Retirer";
